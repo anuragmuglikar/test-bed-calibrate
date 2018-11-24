@@ -15,6 +15,20 @@ lcd2 = CharLCD('MCP23008', 0x20)
 lcd.clear()
 lcd2.clear()
 
+lcd.cursor_mode = "blink"
+lcd2.cursor_mode = "blink"
+xPoint1 = 236
+yPoint1 = 386
+
+xPoint2 = 606
+yPoint2 = 398
+
+xPoint3 = 594
+yPoint3 = 65
+
+xPoint4 = 271
+yPoint4 = 9
+
 with picamera.PiCamera() as camera:
 #camera = PiCamera()
     #camera.start_preview()
@@ -46,10 +60,15 @@ with picamera.PiCamera() as camera:
                          criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
 
         # Mouse function
+        
         def select_point(event, x, y, flags, params):
-            global point, point_selected, old_points
+            global point, point_selected, old_points, flag
             if event == cv2.EVENT_LBUTTONDOWN:
                 point = (x, y)
+                if flag == True:
+                    xPoint1 = x
+                    yPoint1 = y
+                    flag = False
                 point_selected = True
                 old_points = np.array([[x, y]], dtype=np.float32)
 
@@ -57,6 +76,7 @@ with picamera.PiCamera() as camera:
         cv2.namedWindow("Frame")
         cv2.setMouseCallback("Frame", select_point)
         point_selected = False
+        flag = True
         point = ()
         old_points = np.array([[]])
         for frames in camera.capture_continuous(rawCapture, format="rgb", use_video_port=True):
@@ -72,8 +92,11 @@ with picamera.PiCamera() as camera:
                 old_gray = gray_frame.copy()
                 old_points = new_points
                 x, y = new_points.ravel()
-                #print("x:",x)
-
+                posX = (x- xPoint1) % abs(xPoint1 - xPoint2)/16
+                lcd.write_string(str (posX))
+                print("\nx:",x)
+                print("\n y:", y)
+                
                 #lcd.write_string(str(x))
                 #lcd2.write_string(str(y))
 
