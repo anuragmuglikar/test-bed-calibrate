@@ -8,11 +8,12 @@ import io
 from RPLCD.i2c import CharLCD
 
 lcd = CharLCD('MCP23008', 0x24)
-lcd.write_string('Hello')
+#lcd.write_string('Hello')
 
 lcd2 = CharLCD('MCP23008', 0x20)
-lcd2.write_string('world')
-
+#lcd2.write_string('world')
+lcd.clear()
+lcd2.clear()
 
 with picamera.PiCamera() as camera:
 #camera = PiCamera()
@@ -28,6 +29,8 @@ with picamera.PiCamera() as camera:
 
         #Create old frame
         for frames in camera.capture_continuous(rawCapture, format="rgb", use_video_port=True):
+            lcd.clear()
+            lcd2.clear()
             #print(frame)
             frame = frames.array
             #frame = np.asarray(frames)
@@ -69,6 +72,13 @@ with picamera.PiCamera() as camera:
                 old_gray = gray_frame.copy()
                 old_points = new_points
                 x, y = new_points.ravel()
+                #print("x:",x)
+
+                #lcd.write_string(str(x))
+                #lcd2.write_string(str(y))
+
+                #time.sleep(5)
+                
                 cv2.circle(frame, (x, y), 5, (0,255,0), -1)
 
             cv2.imshow("Frame", frame)
