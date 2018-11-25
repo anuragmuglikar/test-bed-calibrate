@@ -6,6 +6,7 @@ import picamera
 import time
 import io
 from RPLCD.i2c import CharLCD
+import math
 
 lcd = CharLCD('MCP23008', 0x24)
 #lcd.write_string('Hello')
@@ -17,27 +18,29 @@ lcd2.clear()
 
 lcd.cursor_mode = "blink"
 lcd2.cursor_mode = "blink"
-xPoint1 = 236
-yPoint1 = 386
+#xPoint1 = 236
+#yPoint1 = 386
 
-xPoint2 = 606
-yPoint2 = 398
+#xPoint2 = 606
+#yPoint2 = 398
 
-xPoint3 = 594
-yPoint3 = 65
+#xPoint3 = 594
+#yPoint3 = 65
 
-xPoint4 = 271
-yPoint4 = 9
-
+#xPoint4 = 271
+#yPoint4 = 9
+xPoint = []
+yPoint = []
+count = 0
 with picamera.PiCamera() as camera:
 #camera = PiCamera()
     #camera.start_preview()
 
     try:
-        camera.resolution = (640, 480)
+        camera.resolution = (400, 400)
         camera.framerate = 32
         #stream = io.BytesIO()
-        rawCapture = PiRGBArray(camera, size=(640, 480))
+        rawCapture = PiRGBArray(camera, size=(400, 400))
 
         time.sleep(2)
 
@@ -62,13 +65,15 @@ with picamera.PiCamera() as camera:
         # Mouse function
         
         def select_point(event, x, y, flags, params):
-            global point, point_selected, old_points, flag
+            global point, point_selected, old_points, count, xPoint, yPoint
             if event == cv2.EVENT_LBUTTONDOWN:
                 point = (x, y)
-                if flag == True:
-                    xPoint1 = x
-                    yPoint1 = y
-                    flag = False
+                if count <= 3:
+                    xPoint.append(x)
+                    yPoint.append(y)
+                    count += 1
+
+                #if(count > 3):
                 point_selected = True
                 old_points = np.array([[x, y]], dtype=np.float32)
 
@@ -92,13 +97,42 @@ with picamera.PiCamera() as camera:
                 old_gray = gray_frame.copy()
                 old_points = new_points
                 x, y = new_points.ravel()
-                posX = (x- xPoint1) % abs(xPoint1 - xPoint2)/16
-                lcd.write_string(str (posX))
-                print("\nx:",x)
-                print("\n y:", y)
+                if(count > 3):
+                    xRange = abs(xPoint[0] - xPoint[1])
+                    yRange = abs(yPoint[0] - yPoint[2])
+                    xMap = (round(xRange/80))*5
+                    yMap = (round(yRange/80))*5
+                    xNew = round(abs(x-xPoint[0]))
+                    yNew = round(abs(y-yPoint[0]))
+                    posX = xNew % xMap
+                    posY = yNew % yMap
+
+                    #posX = math.floor((abs(x-xPoint[0])/abs(xPoint[0] - xPoint[1]))*xMap)
+                    #posY = math.floor((abs(y-yPoint[0])/abs(yPoint[0] - yPoint[2]))*yMap)
+
+                    #lcd.write_string(str (posX))
+                    #print("\nx:",x)
+                    #print("\n y:", y)
                 
-                #lcd.write_string(str(x))
-                #lcd2.write_string(str(y))
+                    #lcd.write_string(str(x))
+                    #lcd2.write_string(str(y))
+                    #print("X: ",xPoint, "\t Y: ",yPoint)
+                    #print("\nX: ", x, "Y: ", y)
+                    if(posX > 15):
+                        posX = 15
+                    if(posY > 15):
+                        posY = 15
+                    if count == 4:
+                        count = 5
+                        initialX = posX
+                        initialY = posY
+                    print("POSX: ",posX, "\t POSY: ",posY)
+                    lcd.cursor_pos = (1,int(initialX))
+                    lcd.write_string("I")
+                    lcd.cursor_pos = (0,int(posX))
+                    lcd2.cursor_pos = (1,int(initialY))
+                    lcd2.write_string("I")
+                    lcd2.cursor_pos = (0,int(posY))
 
                 #time.sleep(5)
                 
