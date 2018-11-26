@@ -10,11 +10,45 @@ import math
 
 lcd = CharLCD('MCP23008', 0x24)
 #lcd.write_string('Hello')
+uparrow = (
+0b00100,
+0b01110,
+0b11111,
+0b11111,
+0b00100,
+0b00100,
+0b00100,
+0b00100)
 
+downarrow = (
+0b00100,
+0b00100,
+0b00100,
+0b00100,
+0b11111,
+0b11111,
+0b01110,
+0b00100)
+
+lcd.create_char(0,uparrow)
+lcd.create_char(1,downarrow)
+lcd.cursor_pos = (1,8)
+lcd.write(0)
+lcd.cursor_pos = (0,8)
+lcd.write(1)
 lcd2 = CharLCD('MCP23008', 0x20)
+
+
+lcd2.create_char(0,uparrow)
+lcd2.create_char(1,downarrow)
+lcd2.cursor_pos = (1,8)
+lcd2.write(0)
+lcd2.cursor_pos = (0,8)
+lcd2.write(1)
+time.sleep(20)
 #lcd2.write_string('world')
-lcd.clear()
-lcd2.clear()
+#lcd.clear()
+#lcd2.clear()
 
 lcd.cursor_mode = "blink"
 lcd2.cursor_mode = "blink"
@@ -128,10 +162,11 @@ with picamera.PiCamera() as camera:
                         initialY = posY
                     print("POSX: ",posX, "\t POSY: ",posY)
                     lcd.cursor_pos = (1,int(initialX))
-                    lcd.write_string("I")
+                    arrow = (0,4,14,31,4,4,4,4)
+                    lcd.create_char(0,arrow)
                     lcd.cursor_pos = (0,int(posX))
                     lcd2.cursor_pos = (1,int(initialY))
-                    lcd2.write_string("I")
+                    lcd.create_char(0,arrow)
                     lcd2.cursor_pos = (0,int(posY))
 
                 #time.sleep(5)
