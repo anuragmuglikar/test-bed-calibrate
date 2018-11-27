@@ -51,6 +51,7 @@ lcd2.cursor_mode = "blink"
 xPoint = []
 yPoint = []
 count = 0
+isStartTracking = False
 with picamera.PiCamera() as camera:
 #camera = PiCamera()
     #camera.start_preview()
@@ -84,17 +85,17 @@ with picamera.PiCamera() as camera:
         # Mouse function
         
         def select_point(event, x, y, flags, params):
-            global point, point_selected, old_points, count, xPoint, yPoint
+            global point, point_selected, old_points, count, xPoint, yPoint,isStartTracking
             if event == cv2.EVENT_LBUTTONDOWN:
                 point = (x, y)
+                if(count >= 4):
+                    count = count + 1
+                    isStartTracking = True
                 print("Count : ",count)
                 if count <= 3:
                     xPoint.append(x)
                     yPoint.append(y)
                     count += 1
-
-                if(count == 4):
-                    count = count + 1
                 point_selected = True
                 old_points = np.array([[x, y]], dtype=np.float32)
 
@@ -144,7 +145,8 @@ with picamera.PiCamera() as camera:
                         posX = 15
                     if(posY > 15):
                         posY = 15
-                    if count > 4:
+                    if isStartTracking is True:
+                        isStartTracking = False
                         initialX = posX
                         initialY = posY
                     print("POSX: ",posX, "\t POSY: ",posY, "\t Count : ",count)
