@@ -30,22 +30,7 @@ downarrow = (
 0b01110,
 0b00100)
 
-lcd.create_char(0,uparrow)
-lcd.create_char(1,downarrow)
-lcd.cursor_pos = (1,8)
-lcd.write(0)
-lcd.cursor_pos = (0,8)
-lcd.write(1)
 lcd2 = CharLCD('MCP23008', 0x20)
-
-
-lcd2.create_char(0,uparrow)
-lcd2.create_char(1,downarrow)
-lcd2.cursor_pos = (1,8)
-lcd2.write(0)
-lcd2.cursor_pos = (0,8)
-lcd2.write(1)
-time.sleep(20)
 #lcd2.write_string('world')
 #lcd.clear()
 #lcd2.clear()
@@ -71,10 +56,10 @@ with picamera.PiCamera() as camera:
     #camera.start_preview()
 
     try:
-        camera.resolution = (400, 400)
+        camera.resolution = (640, 480)
         camera.framerate = 32
         #stream = io.BytesIO()
-        rawCapture = PiRGBArray(camera, size=(400, 400))
+        rawCapture = PiRGBArray(camera, size=(640, 480))
 
         time.sleep(2)
 
@@ -102,12 +87,14 @@ with picamera.PiCamera() as camera:
             global point, point_selected, old_points, count, xPoint, yPoint
             if event == cv2.EVENT_LBUTTONDOWN:
                 point = (x, y)
+                print("Count : ",count)
                 if count <= 3:
                     xPoint.append(x)
                     yPoint.append(y)
                     count += 1
 
-                #if(count > 3):
+                if(count == 4):
+                    count = count + 1
                 point_selected = True
                 old_points = np.array([[x, y]], dtype=np.float32)
 
@@ -131,11 +118,12 @@ with picamera.PiCamera() as camera:
                 old_gray = gray_frame.copy()
                 old_points = new_points
                 x, y = new_points.ravel()
-                if(count > 3):
+                if(count > 4):
+                    print("count: ",count)
                     xRange = abs(xPoint[0] - xPoint[1])
                     yRange = abs(yPoint[0] - yPoint[2])
-                    xMap = (round(xRange/80))*5
-                    yMap = (round(yRange/80))*5
+                    xMap = round((xRange/16))
+                    yMap = round((yRange/16))
                     xNew = round(abs(x-xPoint[0]))
                     yNew = round(abs(y-yPoint[0]))
                     posX = xNew % xMap
@@ -156,19 +144,24 @@ with picamera.PiCamera() as camera:
                         posX = 15
                     if(posY > 15):
                         posY = 15
-                    if count == 4:
-                        count = 5
+                    if count > 4:
                         initialX = posX
                         initialY = posY
-                    print("POSX: ",posX, "\t POSY: ",posY)
+                    print("POSX: ",posX, "\t POSY: ",posY, "\t Count : ",count)
+                    lcd2.create_char(0,uparrow)
+                    lcd2.create_char(1,downarrow)
+                    lcd.create_char(0,uparrow)
+                    lcd.create_char(1,downarrow)
+                    lcd.clear()
+                    lcd2.clear()
                     lcd.cursor_pos = (1,int(initialX))
-                    arrow = (0,4,14,31,4,4,4,4)
-                    lcd.create_char(0,arrow)
+                    lcd.write(0)
                     lcd.cursor_pos = (0,int(posX))
+                    lcd.write(1)
                     lcd2.cursor_pos = (1,int(initialY))
-                    lcd.create_char(0,arrow)
+                    lcd2.write(0)
                     lcd2.cursor_pos = (0,int(posY))
-
+                    lcd2.write(1)
                 #time.sleep(5)
                 
                 cv2.circle(frame, (x, y), 5, (0,255,0), -1)
