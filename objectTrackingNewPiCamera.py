@@ -51,6 +51,8 @@ lcd2.cursor_mode = "blink"
 xPoint = []
 yPoint = []
 count = 0
+xOld = 1000
+yOld = 1000
 isStartTracking = False
 with picamera.PiCamera() as camera:
 #camera = PiCamera()
@@ -85,12 +87,15 @@ with picamera.PiCamera() as camera:
         # Mouse function
         
         def select_point(event, x, y, flags, params):
-            global point, point_selected, old_points, count, xPoint, yPoint,isStartTracking
+            global point, point_selected, old_points, count, xPoint, yPoint,isStartTracking, xOld, yOld 
             if event == cv2.EVENT_LBUTTONDOWN:
                 point = (x, y)
                 if(count >= 4):
                     count = count + 1
                     isStartTracking = True
+                    xOld = x
+                    yOld = y
+                    
                 print("Count : ",count)
                 if count <= 3:
                     xPoint.append(x)
@@ -114,19 +119,31 @@ with picamera.PiCamera() as camera:
             gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
             if point_selected is True:
+                
                 cv2.circle(frame, point, 5, (0,0,255), 2)
                 new_points, status, error = cv2.calcOpticalFlowPyrLK(old_gray, gray_frame, old_points, None, **lk_params)
                 old_gray = gray_frame.copy()
                 old_points = new_points
                 x, y = new_points.ravel()
+
+                if((x >= (xOld-20)) and (x <= (xOld+20))):
+                    xNewPoint = xOld
+                else:
+                    xNewPoint = x
+                if((y >= (yOld-20)) and (y <= (yOld+20))):
+                    yNewPoint = yOld
+                else:
+                    yNewPoint = y
+
+
                 if(count > 4):
                     print("count: ",count)
                     xRange = abs(xPoint[0] - xPoint[1])
                     yRange = abs(yPoint[0] - yPoint[2])
                     xMap = round((xRange/16))
                     yMap = round((yRange/16))
-                    xNew = round(abs(x-xPoint[0]))
-                    yNew = round(abs(y-yPoint[0]))
+                    xNew = round(abs(xNewPoint-xPoint[0]))
+                    yNew = round(abs(yNewPoint-yPoint[0]))
                     posX = xNew % xMap
                     posY = yNew % yMap
 
@@ -166,7 +183,9 @@ with picamera.PiCamera() as camera:
                     lcd2.write(1)
                 #time.sleep(5)
                 
-                cv2.circle(frame, (x, y), 5, (0,255,0), -1)
+                cv2.circle(frame, (xNewPoint, yNewPoint), 5, (0,255,0), -1)
+                xOld = x
+                yOld = y
 
             cv2.imshow("Frame", frame)
             #cv2.imshow("First level", first_level)
