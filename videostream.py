@@ -49,14 +49,13 @@ xmin = 0
 xmax = 700
 ymin = 0
 ymax = 700
+point_selected = False
 xOldWeb = 0
 yOldWeb = 0
 x = 0
 y = 0
-firstTime = False
 blobDetection = False
-point_selected = False
-old_points = np.array([[]])
+firstTime = False
 #point,xPoint, yPoint,xInitial,yInitial                
 
 PAGE="""\
@@ -102,6 +101,8 @@ class StreamingOutput(object):
 
 class StreamingHandler(server.BaseHTTPRequestHandler):
     def do_GET(self):
+        global xOldWeb,yOldWeb,x,y,firstTime,blobDetection,point_selected,old_points,count,xmax,xmin,ymax,ymin
+        
         if self.path == '/':
             self.send_response(301)
             self.send_header('Location', '/index.html')
@@ -135,8 +136,8 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             # try:
             point = (x, y)
             
-
-            frame = output.frame
+            img = output.frame
+            frame = cv2.imdecode(np.frombuffer(output.frame, np.uint8), -1)
             old_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             # Lucas Kanade params
             lk_params = dict(winSize = (15, 15), maxLevel = 4,
@@ -144,11 +145,11 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             while True:
                 with output.condition:
                     output.condition.wait()
-                    frames = output.frame
-                    frame = cv2.UMat(frames)
+                    global blobDetection
                     #old_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                     gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                     if blobDetection == False:
+                        detector = cv2.SimpleBlobDetector_create()
                         keypoints = detector.detect(gray_frame)
                         for keypoint in keypoints:
                             x = int(keypoint.pt[0])
@@ -224,9 +225,9 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
 
                 self.wfile.write(b'--FRAME\r\n')
                 self.send_header('Content-Type', 'image/jpeg')
-                self.send_header('Content-Length', len(frame))
+                self.send_header('Content-Length', len(img))
                 self.end_headers()
-                self.wfile.write(frame)
+                self.wfile.write(img)
                 self.wfile.write(b'\r\n')
                 
                     
